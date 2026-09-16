@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Galaxy Strike - Space Shooter</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#02030b;font-family:Arial,sans-serif}
+body{touch-action:none}
+#game{position:relative;width:100%;height:100%;overflow:hidden;background:
+radial-gradient(circle at 50% 70%,#11184b 0,#060a24 38%,#02030b 75%)}
+#stars,#fx{position:absolute;inset:0}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle 1.5s infinite alternate}
+@keyframes twinkle{to{opacity:.25;transform:scale(.55)}}
+#hud{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;z-index:10;color:white;font-weight:bold;font-size:18px;text-shadow:0 0 8px #4df}
+.badge{background:#101735aa;border:1px solid #4df;border-radius:14px;padding:8px 12px;backdrop-filter:blur(5px)}
+#player{position:absolute;width:54px;height:68px;bottom:55px;left:50%;transform:translateX(-50%);z-index:5;filter:drop-shadow(0 0 12px #3df)}
+.ship{position:absolute;left:10px;top:4px;width:34px;height:52px;background:linear-gradient(90deg,#49dfff,#fff 48%,#b95cff);clip-path:polygon(50% 0,100% 100%,50% 82%,0 100%);border-radius:50%}
+.ship:after{content:"";position:absolute;left:15px;bottom:-12px;width:5px;height:20px;background:#ffcf3f;box-shadow:0 0 12px 5px #ff5a3d;animation:flame .12s infinite alternate}
+@keyframes flame{to{height:27px}}
+.bullet{position:absolute;width:5px;height:20px;background:#7fffff;border-radius:5px;box-shadow:0 0 12px #0ff;z-index:4}
+.enemy{position:absolute;width:48px;height:40px;z-index:4;filter:drop-shadow(0 0 8px #f24)}
+.enemy:before{content:"";position:absolute;inset:3px;background:linear-gradient(135deg,#ff426d,#7a20c9);clip-path:polygon(0 30%,22% 30%,32% 0,68% 0,78% 30%,100% 30%,82% 100%,50% 75%,18% 100%);border:2px solid #ff9}
+.enemy:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#ffea4d;left:20px;top:13px;box-shadow:0 0 10px #ffea4d}
+.enemyBullet{position:absolute;width:5px;height:16px;background:#ff477e;border-radius:4px;box-shadow:0 0 10px #f25;z-index:3}
+.explosion{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 20px 10px #ff7b00,0 0 45px 15px #f22;z-index:8;animation:boom .4s forwards}
+@keyframes boom{to{width:75px;height:75px;margin:-28px 0 0 -28px;opacity:0}}
+#controls{position:absolute;bottom:18px;left:0;right:0;display:flex;justify-content:space-between;padding:0 22px;z-index:12}
+.ctrl{width:70px;height:55px;border-radius:18px;border:1px solid #64eaff;background:#10183dcc;color:#fff;font-size:28px;box-shadow:0 0 15px #146;user-select:none}
+#fire{width:105px;background:#3a135dcc;border-color:#ff4e9b;font-size:18px;font-weight:bold}
+#start{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#02030bd9}
+.panel{text-align:center;color:#fff;padding:30px;border:1px solid #4df;border-radius:25px;background:#0a1030e8;box-shadow:0 0 40px #125;max-width:90%}
+.panel h1{font-size:42px;color:#6df;text-shadow:0 0 20px #0ff;margin-bottom:8px}
+.panel p{color:#ccd8ff;margin:8px 0 20px}
+#startBtn{border:0;border-radius:16px;padding:14px 30px;background:linear-gradient(90deg,#16c8ff,#a044ff);color:#fff;font-weight:bold;font-size:18px}
+.hidden{display:none!important}
+#gameover{position:absolute;inset:0;z-index:19;display:none;align-items:center;justify-content:center;background:#02030bd9}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="stars"></div>
+  <canvas id="fx"></canvas>
+  <div id="hud">
+    <div class="badge">⭐ Score: <span id="score">0</span></div>
+    <div class="badge">❤️ <span id="lives">3</span></div>
+  </div>
+  <div id="player"><div class="ship"></div></div>
+  <div id="controls">
+    <button class="ctrl" id="left">◀</button>
+    <button class="ctrl" id="fire">🔥 FIRE</button>
+    <button class="ctrl" id="right">▶</button>
+  </div>
+  <div id="start">
+    <div class="panel">
+      <h1>GALAXY STRIKE</h1>
+      <p>Destroy the enemy fleet and survive!</p>
+      <p>Move ◀ ▶ &nbsp; • &nbsp; FIRE 🔥</p>
+      <button id="startBtn">START GAME 🚀</button>
+    </div>
+  </div>
+  <div id="gameover">
+    <div class="panel">
+      <h1>GAME OVER</h1>
+      <p>Your score: <b id="finalScore">0</b></p>
+      <button id="restartBtn">PLAY AGAIN 🚀</button>
+    </div>
+  </div>
+</div>
+<script>
+const game=document.getElementById('game'), player=document.getElementById('player');
+const scoreEl=document.getElementById('score'), livesEl=document.getElementById('lives');
+const stars=document.getElementById('stars');
+for(let i=0;i<100;i++){let s=document.createElement('i');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';let z=Math.random()*3+1;s.style.width=s.style.height=z+'px';s.style.animationDelay=Math.random()*2+'s';stars.appendChild(s)}
+let score=0,lives=3,running=false,x=innerWidth/2,last=0,spawnT=0,fireT=0,enemies=[],bullets=[],enemyBullets=[];
+const keys={left:false,right:false,fire:false};
+function reset(){score=0;lives=3;scoreEl.textContent=score;livesEl.textContent=lives;x=innerWidth/2;enemies.forEach(e=>e.el.remove());bullets.forEach(b=>b.el.remove());enemyBullets.forEach(b=>b.el.remove());enemies=[];bullets=[];enemyBullets=[];player.style.left=x+'px'}
+function start(){reset();running=true;document.getElementById('start').classList.add('hidden');document.getElementById('gameover').style.display='none';requestAnimationFrame(loop)}
+function end(){running=false;document.getElementById('finalScore').textContent=score;document.getElementById('gameover').style.display='flex'}
+function makeEnemy(){let el=document.createElement('div');el.className='enemy';let ex=Math.random()*(innerWidth-60)+30;el.style.left=ex+'px';el.style.top='-50px';game.appendChild(el);enemies.push({el,x:ex,y:-50,speed:70+Math.random()*70})}
+function shoot(){let b=document.createElement('div');b.className='bullet';let bx=x;b.style.left=(bx-2.5)+'px';b.style.top=(innerHeight-130)+'px';game.appendChild(b);bullets.push({el:b,x:bx,y:innerHeight-130,speed:600})}
+function enemyShoot(e){let b=document.createElement('div');b.className='enemyBullet';b.style.left=(e.x+22)+'px';b.style.top=(e.y+35)+'px';game.appendChild(b);enemyBullets.push({el:b,x:e.x+24,y:e.y+35,speed:230})}
+function boom(px,py){let e=document.createElement('div');e.className='explosion';e.style.left=px+'px';e.style.top=py+'px';game.appendChild(e);setTimeout(()=>e.remove(),450)}
+function hit(a,b){return Math.abs(a.x-b.x)<32 && Math.abs(a.y-b.y)<40}
+function loseLife(){lives--;livesEl.textContent=lives;if(lives<=0)end()}
+function loop(t){if(!running)return;let dt=Math.min((t-last)/1000,.035);last=t;
+ if(keys.left)x-=360*dt;if(keys.right)x+=360*dt;x=Math.max(30,Math.min(innerWidth-30,x));player.style.left=x+'px';
+ spawnT+=dt;fireT+=dt;if(spawnT>.75){spawnT=0;makeEnemy()}if(keys.fire&&fireT>.22){fireT=0;shoot()}
+ bullets.forEach((b,i)=>{b.y-=b.speed*dt;b.el.style.top=b.y+'px';if(b.y<-30){b.el.remove();bullets.splice(i,1)}})
+ enemies.forEach((e,i)=>{e.y+=e.speed*dt;e.el.style.top=e.y+'px';if(Math.random()<dt*.45)enemyShoot(e);
+   bullets.forEach((b,j)=>{if(hit({x:b.x,y:b.y},{x:e.x+24,y:e.y+20})){boom(e.x+24,e.y+20);e.el.remove();b.el.remove();enemies.splice(i,1);bullets.splice(j,1);score+=10;scoreEl.textContent=score}})
+   if(e.y>innerHeight+30){e.el.remove();enemies.splice(i,1);loseLife()}
+ })
+ enemyBullets.forEach((b,i)=>{b.y+=b.speed*dt;b.el.style.top=b.y+'px';if(b.y>innerHeight+20){b.el.remove();enemyBullets.splice(i,1)}else if(Math.abs(b.x-x)<30&&b.y>innerHeight-115){boom(x,innerHeight-80);b.el.remove();enemyBullets.splice(i,1);loseLife()}})
+ requestAnimationFrame(loop)}
+function bind(btn,key){['pointerdown','touchstart'].forEach(ev=>btn.addEventListener(ev,e=>{e.preventDefault();keys[key]=true},{passive:false}));['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>btn.addEventListener(ev,e=>{e.preventDefault();keys[key]=false},{passive:false}))}
+bind(document.getElementById('left'),'left');bind(document.getElementById('right'),'right');bind(document.getElementById('fire'),'fire');
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft')keys.left=true;if(e.key==='ArrowRight')keys.right=true;if(e.code==='Space')keys.fire=true});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys.left=false;if(e.key==='ArrowRight')keys.right=false;if(e.code==='Space')keys.fire=false});
+document.getElementById('startBtn').onclick=start;document.getElementById('restartBtn').onclick=start;
+addEventListener('resize',()=>{x=Math.min(x,innerWidth-30);player.style.left=x+'px'});
+</script>
+</body>
+</html>

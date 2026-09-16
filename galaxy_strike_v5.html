@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Galaxy Strike V5</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02030a;font-family:Arial,sans-serif;touch-action:none}
+#game{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 80%,#17205b,#070b27 42%,#010208 80%)}
+#stars{position:absolute;inset:0}.star{position:absolute;background:white;border-radius:50%;animation:tw 2s infinite alternate}
+@keyframes tw{to{opacity:.15;transform:scale(.5)}}
+#hud{position:absolute;z-index:20;top:10px;left:10px;right:10px;display:flex;gap:6px;justify-content:space-between;flex-wrap:wrap;color:#fff;font-size:13px;font-weight:bold}
+.badge{background:#101735cc;border:1px solid #4deaff;border-radius:12px;padding:7px 9px;box-shadow:0 0 10px #064}
+#player{position:absolute;z-index:8;width:58px;height:70px;left:50%;bottom:75px;transform:translateX(-50%)}
+.ship{position:absolute;left:11px;top:4px;width:36px;height:54px;background:linear-gradient(90deg,#38cfff,#fff,#a34cff);clip-path:polygon(50% 0,100% 100%,50% 82%,0 100%)}
+.ship:after{content:"";position:absolute;left:15px;bottom:-14px;width:6px;height:22px;background:#ffd23c;box-shadow:0 0 16px 7px #ff4b32;animation:flame .1s infinite alternate}
+@keyframes flame{to{height:30px}}
+.bullet{position:absolute;z-index:7;width:5px;height:22px;border-radius:5px;background:#8fffff;box-shadow:0 0 14px #0ff}
+.enemy{position:absolute;z-index:6;width:50px;height:42px;filter:drop-shadow(0 0 8px #f24)}
+.enemy:before{content:"";position:absolute;inset:2px;background:linear-gradient(135deg,#ff3d70,#7124cf);clip-path:polygon(0 28%,20% 28%,30% 0,70% 0,80% 28%,100% 28%,82% 100%,50% 75%,18% 100%)}
+.enemy:after{content:"";position:absolute;left:21px;top:13px;width:8px;height:8px;border-radius:50%;background:#ffec4a;box-shadow:0 0 12px #ffec4a}
+.enemy.tank{width:62px;height:48px;filter:drop-shadow(0 0 10px #ff8a00)}.enemy.tank:before{background:linear-gradient(135deg,#ffb12b,#d52b25);clip-path:polygon(12% 10%,88% 10%,100% 35%,85% 100%,15% 100%,0 35%)}
+.enemy.zig{filter:drop-shadow(0 0 10px #7dff4d)}.enemy.zig:before{background:linear-gradient(135deg,#4dffbd,#1472ff);clip-path:polygon(50% 0,100% 35%,78% 100%,50% 70%,22% 100%,0 35%)}
+.enemyBullet{position:absolute;z-index:5;width:5px;height:17px;background:#ff4c91;box-shadow:0 0 10px #f25;border-radius:5px}
+.coin{position:absolute;z-index:7;width:20px;height:20px;border-radius:50%;background:#ffd84a;border:2px solid #fff29a;box-shadow:0 0 15px #ffb000;color:#8b5300;font-size:11px;text-align:center;line-height:16px;font-weight:bold}
+.power{position:absolute;z-index:7;width:24px;height:24px;border-radius:8px;background:#55f4ff;border:2px solid white;box-shadow:0 0 18px #0ff;text-align:center;line-height:20px;font-weight:bold;color:#073c55}
+.boss{position:absolute;z-index:9;width:145px;height:90px;filter:drop-shadow(0 0 15px #ff205e)}
+.boss:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,#a20d49,#4421a9);clip-path:polygon(10% 15%,90% 15%,100% 50%,82% 100%,18% 100%,0 50%)}
+.boss:after{content:"";position:absolute;left:61px;top:27px;width:23px;height:23px;border-radius:50%;background:#ffed4d;box-shadow:0 0 25px 8px #ff315c}
+#bossbar{display:none;position:absolute;z-index:20;top:76px;left:12%;right:12%;height:12px;border:1px solid #ff5b8e;border-radius:10px;background:#160817}
+#bossfill{height:100%;width:100%;background:#ff386e;border-radius:10px}
+.explosion{position:absolute;z-index:15;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 0 22px 10px #ffb000,0 0 45px 15px #ff2d55;animation:boom .45s forwards}
+@keyframes boom{to{width:80px;height:80px;margin:-30px 0 0 -30px;opacity:0}}
+#controls{position:absolute;z-index:30;bottom:15px;left:0;right:0;display:flex;justify-content:space-between;padding:0 16px}
+.ctrl{width:68px;height:54px;border-radius:17px;border:1px solid #6df;background:#10183dcc;color:white;font-size:27px;box-shadow:0 0 14px #135}
+#fire{width:100px;background:#3a123dcc;border-color:#ff58a3;font-size:16px;font-weight:bold}
+.overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#02030be8}
+.panel{width:min(430px,92%);padding:26px;text-align:center;color:white;background:#0a1030f2;border:1px solid #53eaff;border-radius:25px;box-shadow:0 0 45px #126}
+h1{font-size:39px;margin:0 0 6px;color:#6df;text-shadow:0 0 18px #0ff}h2{color:#ffcf48}
+p{color:#d7e1ff;line-height:1.45}
+button.start{border:0;border-radius:15px;padding:13px 27px;background:linear-gradient(90deg,#12c9ff,#a33cff);color:white;font-size:18px;font-weight:bold}
+.small{font-size:12px;color:#9fb4df}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="game">
+<div id="stars"></div>
+<div id="hud">
+ <div class="badge">⭐ <span id="score">0</span></div>
+ <div class="badge">💰 <span id="coins">0</span></div>
+ <div class="badge">❤️ <span id="lives">3</span></div>
+ <div class="badge">LV <span id="level">1</span> • 🔫 <span id="weapon">1</span></div>
+</div>
+<div id="bossbar"><div id="bossfill"></div></div>
+<div id="player"><div class="ship"></div></div>
+<div id="controls"><button class="ctrl" id="left">◀</button><button class="ctrl" id="fire">🔥 FIRE</button><button class="ctrl" id="right">▶</button></div>
+
+<div id="start" class="overlay"><div class="panel">
+<h1>GALAXY STRIKE</h1><h2>VERSION 5</h2>
+<p>🚀 Fight through space, collect coins and power-ups, then defeat the boss!</p>
+<p>◀ ▶ Move &nbsp; • &nbsp; 🔥 FIRE</p>
+<button class="start" id="startBtn">START MISSION</button>
+<p class="small">Mobile + keyboard controls • Best score is saved</p>
+</div></div>
+
+<div id="gameover" class="overlay hidden"><div class="panel">
+<h1>MISSION OVER</h1><p>Score: <b id="finalScore">0</b><br>Coins: <b id="finalCoins">0</b></p>
+<button class="start" id="restartBtn">PLAY AGAIN 🚀</button></div></div>
+
+<div id="levelup" class="overlay hidden"><div class="panel">
+<h1>LEVEL UP!</h1><p id="levelText">Level 2</p><button class="start" id="continueBtn">CONTINUE</button></div></div>
+</div>
+<script>
+const game=document.getElementById('game'),player=document.getElementById('player');
+const scoreEl=document.getElementById('score'),coinsEl=document.getElementById('coins'),livesEl=document.getElementById('lives'),levelEl=document.getElementById('level'),weaponEl=document.getElementById('weapon');
+for(let i=0;i<120;i++){let s=document.createElement('i');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';let z=Math.random()*3+1;s.style.width=s.style.height=z+'px';s.style.animationDelay=Math.random()*2+'s';document.getElementById('stars').appendChild(s)}
+let running=false,x=innerWidth/2,score=0,coins=0,lives=3,level=1,weapon=1,shots=0,last=0,spawn=0,fire=0,boss=null,bossHP=0,bossTimer=0,paused=false;
+let enemies=[],bullets=[],ebullets=[],items=[];const keys={left:false,right:false,fire:false};
+function reset(){[...enemies,...bullets,...ebullets,...items].forEach(o=>o.el.remove());if(boss)boss.el.remove();enemies=[];bullets=[];ebullets=[];items=[];boss=null;score=0;coins=0;lives=3;level=1;weapon=1;shots=0;spawn=fire=0;bossTimer=0;x=innerWidth/2;update();player.style.left=x+'px';document.getElementById('bossbar').style.display='none'}
+function update(){scoreEl.textContent=score;coinsEl.textContent=coins;livesEl.textContent=lives;levelEl.textContent=level;weaponEl.textContent=weapon}
+function start(){reset();running=true;paused=false;document.getElementById('start').classList.add('hidden');document.getElementById('gameover').classList.add('hidden');requestAnimationFrame(loop)}
+function gameOver(){running=false;localStorage.setItem('galaxyStrikeV5Best',Math.max(score,+(localStorage.getItem('galaxyStrikeV5Best')||0)));document.getElementById('finalScore').textContent=score;document.getElementById('finalCoins').textContent=coins;document.getElementById('gameover').classList.remove('hidden')}
+function makeEnemy(){let el=document.createElement('div');let r=Math.random(),type=r<.15?'tank':r<.35?'zig':'normal';el.className='enemy '+type;let ex=Math.random()*(innerWidth-70)+35;el.style.left=ex+'px';el.style.top='-60px';game.appendChild(el);enemies.push({el,x:ex,y:-60,speed:65+Math.random()*65+level*7,hp:type==='tank'?3:1,type,phase:Math.random()*6})}
+function makeBoss(){if(boss)return;let el=document.createElement('div');el.className='boss';let bx=innerWidth/2-72;el.style.left=bx+'px';el.style.top='-110px';game.appendChild(el);boss={el,x:bx,y:-110,speed:35};bossHP=25+level*10;document.getElementById('bossbar').style.display='block';document.getElementById('bossfill').style.width='100%'}
+function shoot(){let count=weapon>=3?3:weapon>=2?2:1;for(let k=0;k<count;k++){let b=document.createElement('div');b.className='bullet';let off=(k-(count-1)/2)*18;b.style.left=(x+off-2.5)+'px';b.style.top=(innerHeight-135)+'px';game.appendChild(b);bullets.push({el:b,x:x+off,y:innerHeight-135,speed:650})}}
+function enemyShoot(e){let b=document.createElement('div');b.className='enemyBullet';b.style.left=(e.x+24)+'px';b.style.top=(e.y+35)+'px';game.appendChild(b);ebullets.push({el:b,x:e.x+24,y:e.y+35,speed:210+level*8})}
+function bossShoot(){if(!boss)return;for(let o of [-45,0,45]){let b=document.createElement('div');b.className='enemyBullet';b.style.left=(boss.x+72+o)+'px';b.style.top=(boss.y+80)+'px';game.appendChild(b);ebullets.push({el:b,x:boss.x+72+o,y:boss.y+80,speed:230+level*5})}}
+function item(type,ix,iy){let el=document.createElement('div');el.className=type==='coin'?'coin':'power';el.textContent=type==='coin'?'$':'⚡';el.style.left=ix+'px';el.style.top=iy+'px';game.appendChild(el);items.push({el,x:ix,y:iy,type,speed:75})}
+function boom(px,py){let e=document.createElement('div');e.className='explosion';e.style.left=px+'px';e.style.top=py+'px';game.appendChild(e);setTimeout(()=>e.remove(),450)}
+function hit(a,b,rx=34,ry=42){return Math.abs(a.x-b.x)<rx&&Math.abs(a.y-b.y)<ry}
+function damage(){lives--;update();boom(x,innerHeight-90);if(lives<=0)gameOver()}
+function maybeLevel(){let target=Math.floor(score/150)+1;if(target>level&& !boss){level=target;weapon=Math.min(3,weapon+1);update();paused=true;document.getElementById('levelText').textContent='Level '+level+' • Weapon upgraded!';document.getElementById('levelup').classList.remove('hidden')}}
+document.getElementById('continueBtn').onclick=()=>{document.getElementById('levelup').classList.add('hidden');paused=false;last=performance.now();requestAnimationFrame(loop)}
+function loop(t){if(!running||paused)return;let dt=Math.min((t-last)/1000,.035);last=t;
+if(keys.left)x-=390*dt;if(keys.right)x+=390*dt;x=Math.max(32,Math.min(innerWidth-32,x));player.style.left=x+'px';
+spawn+=dt;fire+=dt;bossTimer+=dt;
+let spawnRate=Math.max(.32,.78-level*.035);if(!boss&&spawn>spawnRate){spawn=0;makeEnemy()}
+if(keys.fire&&fire>.18){fire=0;shoot()}
+bullets.forEach((b,i)=>{b.y-=b.speed*dt;b.el.style.top=b.y+'px';if(b.y<-30){b.el.remove();bullets.splice(i,1)}})
+enemies.forEach((e,i)=>{e.y+=e.speed*dt;e.phase+=dt;e.x+=(e.type==='zig'?Math.sin(e.phase*4)*35:0)*dt;e.el.style.top=e.y+'px';e.el.style.left=e.x+'px';
+if(Math.random()<dt*(.35+level*.03))enemyShoot(e);
+bullets.forEach((b,j)=>{if(hit({x:b.x,y:b.y},{x:e.x+25,y:e.y+20},34,32)){b.el.remove();bullets.splice(j,1);e.hp--;if(e.hp<=0){boom(e.x+25,e.y+20);score+=e.type==='tank'?30:10;if(Math.random()<.28)item('coin',e.x+15,e.y+15);if(Math.random()<.08)item('power',e.x+15,e.y+15);e.el.remove();enemies.splice(i,1);update();maybeLevel()}}});
+if(e.y>innerHeight+20){e.el.remove();enemies.splice(i,1);damage()}
+})
+if(!boss&&level%3===0&&bossTimer>18)makeBoss();
+if(boss){if(boss.y<80)boss.y+=boss.speed*dt;boss.x=innerWidth/2-72+Math.sin(t/900)*Math.max(0,innerWidth/2-150);boss.el.style.top=boss.y+'px';boss.el.style.left=boss.x+'px';if(Math.random()<dt*.7)bossShoot();
+bullets.forEach((b,j)=>{if(hit({x:b.x,y:b.y},{x:boss.x+72,y:boss.y+45},85,60)){b.el.remove();bullets.splice(j,1);bossHP--;document.getElementById('bossfill').style.width=(bossHP/(25+level*10)*100)+'%';if(bossHP<=0){boom(boss.x+72,boss.y+45);boss.el.remove();boss=null;score+=250;coins+=20;level++;weapon=Math.min(3,weapon+1);bossTimer=0;document.getElementById('bossbar').style.display='none';update()}}})}
+ebullets.forEach((b,i)=>{b.y+=b.speed*dt;b.el.style.top=b.y+'px';if(b.y>innerHeight+20){b.el.remove();ebullets.splice(i,1)}else if(Math.abs(b.x-x)<31&&b.y>innerHeight-130){b.el.remove();ebullets.splice(i,1);damage()}})
+items.forEach((it,i)=>{it.y+=it.speed*dt;it.el.style.top=it.y+'px';if(it.y>innerHeight+20){it.el.remove();items.splice(i,1)}else if(hit({x:x,y:innerHeight-95},{x:it.x+10,y:it.y+10},35,45)){if(it.type==='coin')coins++;else weapon=Math.min(3,weapon+1);it.el.remove();items.splice(i,1);update()}})
+requestAnimationFrame(loop)}
+function bind(id,key){let b=document.getElementById(id);['pointerdown','touchstart'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();keys[key]=true},{passive:false}));['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();keys[key]=false},{passive:false}))}
+bind('left','left');bind('right','right');bind('fire','fire');
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft')keys.left=true;if(e.key==='ArrowRight')keys.right=true;if(e.code==='Space')keys.fire=true});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys.left=false;if(e.key==='ArrowRight')keys.right=false;if(e.code==='Space')keys.fire=false});
+document.getElementById('startBtn').onclick=start;document.getElementById('restartBtn').onclick=start;
+addEventListener('resize',()=>{x=Math.min(x,innerWidth-32);player.style.left=x+'px'});
+</script>
+</body>
+</html>
